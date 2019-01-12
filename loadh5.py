@@ -1,6 +1,7 @@
 import h5py
 import os
 import numpy as np
+import pdb
 import matplotlib.pyplot as plt
 from scipy import ndimage
 
@@ -41,28 +42,34 @@ def crop(data,px_height=128,px_width=128):
 
 dir_stroke = '/Users/admin/stroke_DL/results/'
 
-path_ori = os.path.join(dir_stroke, 'inputs_aug0.hdf5')
+path_ori = os.path.join(dir_stroke, 'output_aug0.hdf5')
 data_ori = load_h5(path_ori, 'init', None)
 # data_ori = np.transpose(data_ori,[1,2,0,3])
-path_aug1 = os.path.join(dir_stroke, 'inputs_aug0.hdf5')
-# data_aug1 = load_h5(path_aug1, 'init', None)
-path_aug2 = os.path.join(dir_stroke, 'output_aug0.hdf5')
-data_aug2 = load_h5(path_aug2, 'init', None)
-# data_aug2 = np.transpose(data_aug2,[1,2,0,3])
-path_aug3 = os.path.join(dir_stroke, 'output_aug0.hdf5')
-# data_aug3 = load_h5(path_aug3, 'init', None)
-
-data_aug1 = ndimage.interpolation.rotate(data_ori,-30,axes=(1,2))
-print(data_aug1.shape,data_ori.shape)
-data_aug1 = crop(data_aug1,data_ori.shape[2],data_ori.shape[1])
-data_aug3 = ndimage.interpolation.rotate(data_aug2,-30,axes=(1,2))
-data_aug3 = crop(data_aug3,data_ori.shape[2],data_ori.shape[1])
-data_aug3 = (data_aug3 > 0.5) * 1.0
-print(np.max(data_aug3),np.mean(data_aug3))
-# show output
-f, ax = plt.subplots(1, 4, subplot_kw={'xticks': [], 'yticks': []})
-ax[0].imshow(data_ori[30,:,:,0], cmap=plt.cm.gray)
-ax[1].imshow(data_aug1[30,:,:,0], cmap=plt.cm.gray)
-ax[2].imshow(data_aug2[30,:,:,0], cmap=plt.cm.gray)
-ax[3].imshow(data_aug3[30,:,:,0], cmap=plt.cm.gray)
-plt.show()
+# path_aug1 = os.path.join(dir_stroke, 'inputs_aug0.hdf5')
+# # data_aug1 = load_h5(path_aug1, 'init', None)
+# path_aug2 = os.path.join(dir_stroke, 'output_aug0.hdf5')
+# data_aug2 = load_h5(path_aug2, 'init', None)
+# # data_aug2 = np.transpose(data_aug2,[1,2,0,3])
+# path_aug3 = os.path.join(dir_stroke, 'output_aug0.hdf5')
+# # data_aug3 = load_h5(path_aug3, 'init', None)
+max = np.max(data_ori[:,:,:,0])
+print(max)
+# pdb.set_trace()
+# nonzero = np.nonzero(data_ori[:,:,:,2])
+# data_new = data_ori[nonzero]
+# print(np.mean(data_new))
+# print(np.mean(data_ori[np.nonzero(data_ori[:,:,:,2])]))
+# data_aug1 = ndimage.interpolation.rotate(data_ori,-30,axes=(1,2))
+# print(data_aug1.shape,data_ori.shape)
+# data_aug1 = crop(data_aug1,data_ori.shape[2],data_ori.shape[1])
+# data_aug3 = ndimage.interpolation.rotate(data_aug2,-30,axes=(1,2))
+# data_aug3 = crop(data_aug3,data_ori.shape[2],data_ori.shape[1])
+# data_aug3 = (data_aug3 > 0.5) * 1.0
+# print(np.max(data_aug3),np.mean(data_aug3))
+# # show output
+# f, ax = plt.subplots(1, 4, subplot_kw={'xticks': [], 'yticks': []})
+# ax[0].imshow(data_ori[30,:,:,0], cmap=plt.cm.gray)
+# # ax[1].imshow(data_aug1[30,:,:,0], cmap=plt.cm.gray)
+# # ax[2].imshow(data_aug2[30,:,:,0], cmap=plt.cm.gray)
+# # ax[3].imshow(data_aug3[30,:,:,0], cmap=plt.cm.gray)
+# plt.show()

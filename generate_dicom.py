@@ -166,16 +166,22 @@ list_nonreper_test = list_nonreper_test1,list_nonreper_test2,list_nonreper_test3
 list_reper_test = list_reper_test1,list_reper_test2,list_reper_test3,list_reper_test4,list_reper_test5
 ###################### here's where the main begins ###########################
 alpha = 0.6 # color hue
-thres = 0.2
+thres = 0.1
 thres_gt = 0.9
 flip = False
 # model_name ='1129_charlesmod_DWI+ADC_reper_aug_true0.9_nonan'
-model_name = '1220_DWI+TMAX+thresholded_nonreper_nestedU'
-name_tag = '_ifnonreper'
-data_dir = '/Users/admin/stroke_DL/results/' + model_name +'/' # On longo:'/data3/yuanxie/project_stroke_mask/'
-
+model_name = '1129_charlesmod_DWI+ADC_nonreper_aug_true0.9_nonan'
+name_tag = '_nonreper_thres' + str(thres)
+data_dir = '/Users/admin/stroke_DL/results/' + model_name +'_bestmodel/' # On longo:'/data3/yuanxie/project_stroke_mask/'
+lower_lim = 13
+upper_lim = 73
+if 'nonreper' in name_tag:
+	tmax_mode = True
+elif 'reper' in name_tag:
+	tmax_mode = False
+print(tmax_mode)
 for cv in range(0,5):
-	for subj_id in list_reper_test[cv]:
+	for subj_id in list_nonreper_test[cv]:
 	# for subj_id in ['01020']:
 		# subj_id = subj_id[:5]
 		print(subj_id)
@@ -208,26 +214,26 @@ for cv in range(0,5):
 		dwi_volume = dwi.get_fdata()
 		dwi_volume = np.maximum(0, np.nan_to_num(dwi_volume, 0))
 		dwi_volume = dwi_volume * T1mask
-		dwi_volume = dwi_volume[:,:,13:73]
+		dwi_volume = dwi_volume[:,:,lower_lim:upper_lim]
 		mean_dwi = np.mean(dwi_volume[np.nonzero(dwi_volume)])
 		dwi_mask = dwi_volume > (0.3 * mean_dwi)
 		adc = nib.load(adc_path)
 		adc_volume = adc.get_fdata() * T1mask
-		adc_volume = adc_volume[:,:,13:73]
+		adc_volume = adc_volume[:,:,lower_lim:upper_lim]
 		tmax_data = nib.load(tmax_path)
 		tmax = processing.smooth_image(tmax_data, 3)
 		tmax_volume = tmax.get_fdata() * T1mask
-		tmax_volume = tmax_volume[:,:,13:73]
+		tmax_volume = tmax_volume[:,:,lower_lim:upper_lim]
 		mtt = nib.load(mtt_path)
 		mtt_volume = mtt.get_fdata() * T1mask
-		mtt_volume = mtt_volume[:,:,13:73]
+		mtt_volume = mtt_volume[:,:,lower_lim:upper_lim]
 		cbf = nib.load(cbf_path)
 		cbf_volume = cbf.get_fdata() * T1mask
-		cbf_volume = cbf_volume[:,:,13:73]
+		cbf_volume = cbf_volume[:,:,lower_lim:upper_lim]
 		cbv = nib.load(cbv_path)
 		cbv_volume = cbv.get_fdata() * T1mask
-		cbv_volume = cbv_volume[:,:,13:73]
-		T1mask = T1mask[:,:,13:73]
+		cbv_volume = cbv_volume[:,:,lower_lim:upper_lim]
+		T1mask = T1mask[:,:,lower_lim:upper_lim]
 		img_list = {'dwi': dwi_volume, 'adc': adc_volume, 'tmax': tmax_volume,
 										 'mtt': mtt_volume, 'cbf': cbf_volume,
 										 'cbv': cbv_volume, 'flair': flair_pad, 'model': result_volume,
@@ -259,10 +265,10 @@ for cv in range(0,5):
 											 'cbv': img_list['cbv'][:,:,s], 'flair': img_list['flair'][:,:,s], 'model': img_list['model'][:,:,s], 'gt': img_list['gt'][:,:,s], 'mask': img_list['mask'][:,:,s]}
 			contrast_list_input = {'dwi': input_list['dwi'][:,:,s], 'adc': input_list['adc'][:,:,s], 'tmax': input_list['tmax'][:,:,s],
 										 'mtt': input_list['mtt'][:,:,s], 'cbf': input_list['cbf'][:,:,s],'cbv': input_list['cbv'][:,:,s]}
-			img_output = form_grid(contrast_list['model'], contrast_list['gt'], contrast_list['flair'], contrast_list['tmax'], contrast_list['adc'], contrast_list['mask'], thres=thres,thres_gt=thres_gt,tmax_mode=True, thres_adc=thres_adc,thres_tmax=thres_tmax)
+			img_output = form_grid(contrast_list['model'], contrast_list['gt'], contrast_list['flair'], contrast_list['tmax'], contrast_list['adc'], contrast_list['mask'], thres=thres,thres_gt=thres_gt,tmax_mode=tmax_mode, thres_adc=thres_adc,thres_tmax=thres_tmax)
 			img_input_line1, img_input_line2 = input_grid(contrast_list_input['dwi'], contrast_list_input['adc'], contrast_list_input['tmax'], contrast_list_input['mtt'], contrast_list_input['cbf'], contrast_list_input['cbv'])
 			# print(img_output.shape, img_input_line2.shape)
-			# img_input = np.concatenate((img_input_line1, img_input_line2), axis=0)
+			img_input = np.concatenate((img_input_line1, img_input_line2), axis=0)
 			# img_final = np.concatenate((img_input_line1,img_input_line2,img_output),axis = 0)
 			output_path = data_dir + 'review' + name_tag + '/' + subj_id + '/'
 			if not os.path.exists(output_path):

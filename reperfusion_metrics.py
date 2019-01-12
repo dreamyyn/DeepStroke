@@ -53,11 +53,43 @@ def weighted_dice(y_true,y_pred,smooth = 0.00001,threshold_true = 0.1, threshold
     y_pred_f = y_pred.flatten() >= threshold_pred
     intersection = np.sum(y_true_f * y_pred_f)
     return (2. * intersection) / (1.7 * np.sum(y_true_f) + 0.3 * np.sum(y_pred_f) + smooth)
+def get_max_for_each_slice(data):
+    '''
+    data has to be 3d
+    '''
+    assert len(data.shape) == 3 , 'input data is not 3d'
+    max_list = []
+    for slice_num in range(data.shape[2]):
+        max_list.append(np.max(data[:,:,slice_num]))
+    return max_list
+
+def define_laterality(data,threshold):
+    midline = int(data.shape[0] / 2)
+    max_list_gt = get_max_for_each_slice(data)
+    lesion_left = 0
+    lesion_right = 0
+    lesion_side = ''
+    for slice_num in range(len(max_list_gt)):
+        if max_list_gt[slice_num] > threshold:
+            if np.sum(data[:midline, :, slice_num]) > np.sum(data[midline:, :,
+                                                                slice_num]):  ## If stroke in Left side of the image and Right side of the brain
+                lesion_left += 1
+            elif np.sum(data[:midline, :, slice_num]) < np.sum(data[midline:, :,
+                                                                  slice_num]):  ## If stroke in Right side of the image and Left side of the brain
+                lesion_right += 1
+    if (lesion_left > lesion_right and (lesion_right > 3)) or (lesion_left < lesion_right and (lesion_left > 3)):
+        lesion_side = 'B'
+    elif lesion_left > lesion_right:
+        lesion_side = 'L'
+    elif lesion_right > lesion_left:
+        lesion_side = 'R'
+    # print(lesion_left,lesion_right)
+    return lesion_side
 list_nonreper_test1 = ["03032","01020","01002","05002","08009","03045","11003","01042","30058A","30082A","08010","30049A","30073A"]
 list_nonreper_test2 = ["09005","05011","05010","03002","01021","10002","30008A","30054","01010","30030A","01047","30032","03028"]
 list_nonreper_test3 = ["09007","05006","11004","01017","03040","01007","05008","30007","01036","09006","09002","30043","10001"]
 list_nonreper_test4 = ["03025","30037","09003","05007","05012","05003","30027A","05005","11002","10006","10007","30084A","02003"]
-list_nonreper_test5 = ["01027","01038","01041","02005","01040","08007","10004","03018","09004","01004","01045"]
+list_nonreper_test5 = ["01027","01038","01041","02005","01040","08007","10004","03018","09004","01004","01045","10005","11001"]
 list_reper_test1 = ["30012","01028","30042","30116","03027","30006A","03017","30068","03043","03016","01003","03046","30099","30117","30046A","30102","03042","30028","03047","01029","01006"]
 list_reper_test2 = ["08005","01048","30063","30101","05001","10003","03008","30069A","08008","30035A","03007","30041","30040","30096","30126","08003","30108","30097","03033","30120","01001"]
 # 30018A belongs to test 3, but with no GRE. so temperarily removed. if tested in any combination with no GRE, should include 30018A.
@@ -84,17 +116,12 @@ threshold_true = 0.9
 # threshold_pred = 60
 list_result = {'subject': [], 'auc': [], 'precision': [], 'recall': [], 'specificity': [], 'dice': [], 'auc_all': [],
                'volume_difference': [], 'volume_predicted': [], 'weighted_dice': []}
-for subject_name in subj_list_core:
+for subject_name in subj_list_penumbra:
     # for subject_name in ['01007']:
     # load data
-    TMAX_path = subj_path + subject_name + '/PWITMAX.nii'
     lesion_path = subj_path + subject_name + '/LESION.nii'
     DWI_path = subj_path + subject_name + '/DWI.nii'
     ADC_path = subj_path + subject_name + '/ADC.nii'
-    TMAX_load = nib.load(TMAX_path)
-    ## for tmax map, smooth out the image
-    tmax_smooth = processing.smooth_image(TMAX_load, 3)
-    tmax = tmax_smooth.get_fdata()
 
     lesion_load = nib.load(lesion_path)
     lesion = lesion_load.get_fdata()
@@ -104,12 +131,9 @@ for subject_name in subj_list_core:
     brain_mask_data = nib.load('/Users/admin/controls_stroke_DL/001/T1.nii')
     brain_mask = brain_mask_data.get_fdata()
     # calcualte dwi mean to remove ventricles.
-    mask_fordwi = brain_mask[:, :, 45] > 0
-    mask_dwi = mask_fordwi * 1.0
-    mask_dwi[mask_dwi == 0] = np.NaN
-    dwi_masked = dwi[:, :, 45] * mask_dwi
-    dwi_num = dwi_masked.flatten()
-    dwi_mean = np.mean(dwi_num[~np.isnan(dwi_num)])
+    dwi = np.maximum(0, np.nan_to_num(dwi, 0))
+    dwi = dwi * (brain_mask > 0)
+    dwi_mean = np.mean(dwi[np.nonzero(dwi)])
     # load pwi mask
     adc_load = nib.load(ADC_path)
     adc = adc_load.get_fdata()
@@ -125,42 +149,23 @@ for subject_name in subj_list_core:
     else:
         adc_threshold = 620
 
-    lesion_side = ''
-    for slice_num in range(13,73):
-        if np.max(lesion[:, :, slice_num]) > threshold_true:
-            if np.sum(lesion[0:46, :, slice_num]) > np.sum(
-                    lesion[46:91, :, slice_num]):  ## If stroke in Left side of the image and Right side of the brain
-                lesion_side += 'L'
-            elif np.sum(lesion[0:46, :, slice_num]) < np.sum(
-                    lesion[46:91, :, slice_num]):  ## If stroke in Right side of the image and Left side of the brain
-                lesion_side += 'R'
+    lesion_side = define_laterality(lesion[:,:,13:73], threshold_true)
+
+    midline = int(lesion.shape[0] / 2)
+    if lesion_side != 'B':
+        if lesion_side == 'L':  ## If stroke in Left side of the image and Right side of the brain
+            brain_mask[midline:, :, :] = 0
+        elif lesion_side == 'R':  ## If stroke in Right side of the image and Left side of the brain
+            brain_mask[:midline, :, :] = 0
         else:
-            continue
-    if (lesion_side.count('L') > lesion_side.count('R') and (lesion_side.count('R') > 1)) or (
-            lesion_side.count('L') < lesion_side.count('R') and (lesion_side.count('L') > 1)):
-        lesion_side = 'B'
-        # print('bilateral stroke',lesion_side,'L:',lesion_side.count('L'),'R:',lesion_side.count('R'))
+            print('check code and data. Left lesion  = Right lesion ')
+
     for slice_num in range(13,73):
         y_pred_raw = np.logical_and(adc[:, :, slice_num] > 0, adc[:, :, slice_num] < adc_threshold)
         if np.max(lesion[:, :, slice_num]) > threshold_true or np.max(y_pred_raw) > 0.5:
-            # y_pred_raw = morphology.remove_small_objects(y_pred_raw, 125) ## remove small objects below 1ml
-
+            y_pred_raw = morphology.remove_small_objects(y_pred_raw, 10) ## remove small objects below 1ml
             mask = brain_mask[:, :, slice_num] > 0
             mask = mask * 1.0
-            # select out the hemisphere with stroke lesions
-            if lesion_side == 'B':
-                mask = mask
-            elif lesion_side.count('L') > lesion_side.count(
-                    'R'):  ## If stroke in Left side of the image and Right side of the brain
-                mask[46:91, :] = np.NaN
-
-            elif lesion_side.count('L') < lesion_side.count(
-                    'R'):  ## If stroke in Right side of the image and Left side of the brain
-                mask[0:46, :] = np.NaN
-
-            else:
-                print('lesion side cannot decide, check data and code')
-
             mask[mask == 0] = np.NaN
             dwi_mask = dwi[:, :, slice_num] > (0.3 * dwi_mean)  # remove ventricles
             y_true_masked = (lesion[:, :, slice_num] * mask) * dwi_mask
@@ -170,8 +175,6 @@ for subject_name in subj_list_core:
             y_pred_cont = adc[:, :, slice_num] * mask * dwi_mask
             y_pred_continuous_data.append(y_pred_cont)
 
-        else:
-            continue
     y_true = np.array(y_true_data).flatten()
     y_true = y_true[~np.isnan(y_true)]
     y_pred = np.array(y_pred_data).flatten()
@@ -190,7 +193,8 @@ for subject_name in subj_list_core:
     volpred = vol_pred(y_pred, 0.5)
     weighted_dice_score = weighted_dice(y_true, y_pred, threshold_true=threshold_true, threshold_pred=0.5)
     # print(np.sum(y_true>=0.9))
-    print(subject_name, dice, 1-auc_hemisphere, precision, recall, spec, voldiff*0.008, volpred*0.008,abs(voldiff*0.008))
+    # print(subject_name, dice, 1-auc_hemisphere, precision, recall, spec, voldiff*0.008, volpred*0.008,abs(voldiff*0.008))
+    print(volpred*0.008)
     list_result['subject'].append(subject_name)
     list_result['auc'].append(auc_hemisphere)
     list_result['precision'].append(precision)
@@ -201,4 +205,4 @@ for subject_name in subj_list_core:
     list_result['volume_predicted'].append(volpred)
     list_result['weighted_dice'].append(weighted_dice_score)
 
-print('mean',np.mean(list_result['dice']),1-np.mean(list_result['auc']),np.mean(list_result['precision']),np.mean(list_result['recall']),np.mean(list_result['specificity']),np.mean(list_result['volume_difference']))
+# print('mean',np.mean(list_result['dice']),1-np.mean(list_result['auc']),np.mean(list_result['precision']),np.mean(list_result['recall']),np.mean(list_result['specificity']),np.mean(list_result['volume_difference']))
