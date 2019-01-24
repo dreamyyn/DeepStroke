@@ -111,6 +111,12 @@ list_reper_test3 = ["30018A","03036","30122","30048A","30053","03039","30098","3
 list_reper_test4 = ["03013","03035","08001","03031","30056","02004","03041","01032","03019","30103","30023","30061","03009","03020","30047A","30026A","30109","05009","03048","10009","30090A"]
 list_reper_test5 = ["30092","30022A","30034","30106","30080","03001","01049","12001","30113","01044","30075A","30059A","03003","30077A","30045A","30124","02006","30001A"]
 
+list_lg_test1 = ["30027A","30054","05010","30073A","01041","09005"]
+list_lg_test2 = ["09002","30058A","10001","01040","03002","10005"]
+list_lg_test3 = ["05002","05012","30082A","03025","01045","30084A"]
+list_lg_test4 = ["01038","30030A","30049A","03032","10006","09003"]
+list_lg_test5 = ["10007","01047","03018","05003","08010","11001","02003"]
+subj_list_lg = sorted(list_lg_test1)+sorted(list_lg_test2)+sorted(list_lg_test3)+sorted(list_lg_test4)+sorted(list_lg_test5)
 # grouped based on reperfusion rate <30% or >70%
 # list_nonreper_test1 = ["30032","01041","30006A","10006","05010","30054","08007"]
 # list_nonreper_test2 = ["01020","03040","03008","01017","03001","01040","30058A"]
@@ -134,7 +140,7 @@ threshold_true = 0.9
 all_y_true = np.array([])
 all_y_pred = np.array([])
 all_y_tmax = np.array([])
-for subject_name in subj_list_penumbra:
+for subject_name in subj_list_lg:
 # for subject_name in ['30063','30069A','30096','30097']:
     # for subject_name in ['01007']:
     # load data
@@ -216,20 +222,20 @@ for subject_name in subj_list_penumbra:
     y_tmax = y_tmax[~np.isnan(y_tmax)]
     # print(len(y_pred))
 
-    all_y_true = np.append(all_y_true, y_true)
-    all_y_pred = np.append(all_y_pred, y_pred)
-    all_y_tmax = np.append(all_y_tmax, y_tmax)
-    # auc_hemisphere, precision, recall, dice, spec, voldiff, volpred, f1score = metrics_output(y_true, y_pred,
-    #                                                                                           threshold_true,
-    #                                                                                           threshold_pred)
-    # fpr, tpr, thresholds = roc_curve(y_true > threshold_true, y_tmax)
-    # auc_tmax = auc(fpr,tpr)
+    # all_y_true = np.append(all_y_true, y_true)
+    # all_y_pred = np.append(all_y_pred, y_pred)
+    # all_y_tmax = np.append(all_y_tmax, y_tmax)
+    auc_hemisphere, precision, recall, dice, spec, voldiff, volpred, f1score = metrics_output(y_true, y_pred,
+                                                                                              threshold_true,
+                                                                                              0.5)
+    fpr, tpr, thresholds = roc_curve(y_true > threshold_true, y_tmax)
+    auc_tmax = auc(fpr,tpr)
 
     # weighted_dice_score = weighted_dice(y_true, y_pred, threshold_true=threshold_true, threshold_pred=0.5)
     # print(np.sum(y_true>=0.9)*0.008)
-    # print(subject_name, dice, auc_hemisphere, precision, recall, spec, voldiff*0.008, volpred*0.008, abs(voldiff)*0.008)
+    print(subject_name, dice, auc_hemisphere, precision, recall, spec, voldiff, volpred, abs(voldiff), auc_tmax)
     # print(subject_name, lesion_side)
     # print(auc_tmax)
-all_auc_hemisphere, all_precision, all_recall, all_dice, all_spec, all_voldiff, all_volpred, all_f1score = metrics_output(all_y_true, all_y_pred, threshold_true=.9, threshold_pred=0.5)
-tmax_auc_hemisphere = metrics_output(all_y_tmax, all_y_pred)
-print(all_dice, all_auc_hemisphere, all_precision, all_recall, all_voldiff)
+# all_auc_hemisphere, all_precision, all_recall, all_dice, all_spec, all_voldiff, all_volpred, all_f1score = metrics_output(all_y_true, all_y_pred, threshold_true=.9, threshold_pred=0.5)
+# tmax_auc_hemisphere = metrics_output(all_y_tmax, all_y_pred)
+# print(all_dice, all_auc_hemisphere, all_precision, all_recall, all_voldiff)

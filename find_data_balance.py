@@ -18,7 +18,7 @@ subj_list_core = sorted(list_reper_test1)+sorted(list_reper_test2)+sorted(list_r
 neg_sample = 0
 pos_sample = 0
 for subject_name in subj_list_penumbra + subj_list_core:
-  lesion_path = '/Users/admin/deepstroke173/deepstroke173/' + subject_name + '/LESION.nii'
+  lesion_path = '/Users/admin/deepstroke173/PWImasked173/' + subject_name + '/LESION.nii'
   lesion_load = nib.load(lesion_path)
   lesion = (lesion_load.get_fdata() > 0.9) * 1.
   lesion = np.maximum(0, np.nan_to_num(lesion, 0))
@@ -26,7 +26,7 @@ for subject_name in subj_list_penumbra + subj_list_core:
   brain_mask = (brain_mask_data.get_fdata() > 0) * 1.
   brain_mask[np.isnan(brain_mask)] = np.NaN
   lesion_f = np.array(lesion).flatten()
-  brain_mask_f = np.array(brain_mask).flatten()
+  brain_mask_f = np.array(brain_mask[:,:,13:73]).flatten()
   masked_lesion = lesion_f * brain_mask_f
   result = masked_lesion[~np.isnan(masked_lesion)]
   pos_sample += np.sum(result)

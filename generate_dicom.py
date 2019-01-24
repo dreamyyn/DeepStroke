@@ -151,6 +151,19 @@ list_reper_test3 = ["30018A","03036","30122","30048A","30053","03039","30098","3
 list_reper_test4 = ["03013","03035","08001","03031","30056","02004","03041","01032","03019","30103","30023","30061","03009","03020","30047A","30026A","30109","05009","03048","10009","30090A"]
 list_reper_test5 = ["30092","30022A","30034","30106","30080","03001","01049","12001","30113","01044","30075A","30059A","03003","30077A","30045A","30124","02006","30001A"]
 
+list_lg_test1 = ["30027A","30054","05010","30073A","01041","09005"]
+list_lg_test2 = ["09002","30058A","10001","01040","03002","10005"]
+list_lg_test3 = ["05002","05012","30082A","03025","01045","30084A"]
+list_lg_test4 = ["01038","30030A","30049A","03032","10006","09003"]
+list_lg_test5 = ["10007","01047","03018","05003","08010","11001","02003"]
+list_lg_test = list_lg_test1, list_lg_test2, list_lg_test3, list_lg_test4, list_lg_test5
+
+list_all_test1 = ["03043","30034","30124","30037","30069A","30058A","01027","30023","12001","03045","10002","08007","30109","05011","10009","01047","10005","30097","11001","10001","08009","30095","30117","11002","30113","03046","09005","30082A","30007","03007","30032","03048","01017","03019","30022A"]
+list_all_test2 = ["08004","03026","01001","05006","05008","30102","01049","01015","30080","30061","30045A","30054","08010","30068","03036","11003","09007","01042","10006","30012","30053","03042","09004","30063","01003","01038","30110","08001","02005","30101","30006A","01006","30127","03039","05007"]
+list_all_test3 = ["03011","30057A","01040","03008","30024A","01002","03032","30042","03028","30108","05010","30104","03001","30084A","03025","30075A","30106","05002","30027A","01010","03003","30103","30047A","01007","03047","05009","03035","30049A","03018","30115","30028","03041","30002A","03024","01045"]
+list_all_test4 = ["03009","01041","03037","30090A","02004","01028","30041","01020","30025","02001","30040","30122","30077A","09002","30120","03013","02003","05003","30098","01021","08008","11004","30008A","05012","03033","01048","30099","30071A","01044","30030A","30048A","30055","30018A","03020","03031"]
+list_all_test5 = ["03017","30035A","30001A","01043","30096","01004","10003","08005","30073A","30056","05001","03027","09006","30100","08003","10004","30116","30092","02006","30026A","30046A","03002","03040","09003","30059A","30043","01029","03016","30078A","10007","05005","01036","30126","01032"]
+list_all_test = list_all_test1, list_all_test2, list_all_test3, list_all_test4, list_all_test5
 # grouped based on reperfusion rate <30% or >70%
 # list_nonreper_test1 = ["30032","01041","30006A","10006","05010","30054","08007"]
 # list_nonreper_test2 = ["01020","03040","03008","01017","03001","01040","30058A"]
@@ -166,13 +179,13 @@ list_nonreper_test = list_nonreper_test1,list_nonreper_test2,list_nonreper_test3
 list_reper_test = list_reper_test1,list_reper_test2,list_reper_test3,list_reper_test4,list_reper_test5
 ###################### here's where the main begins ###########################
 alpha = 0.6 # color hue
-thres = 0.1
+thres = 0.5
 thres_gt = 0.9
 flip = False
 # model_name ='1129_charlesmod_DWI+ADC_reper_aug_true0.9_nonan'
-model_name = '1129_charlesmod_DWI+ADC_nonreper_aug_true0.9_nonan'
+model_name = '0113_6inputs+thresholded_all_4c2p_U_reperloss_weighted_binary_ce'
 name_tag = '_nonreper_thres' + str(thres)
-data_dir = '/Users/admin/stroke_DL/results/' + model_name +'_bestmodel/' # On longo:'/data3/yuanxie/project_stroke_mask/'
+data_dir = '/Users/admin/stroke_DL/results/' + model_name +'/' # On longo:'/data3/yuanxie/project_stroke_mask/'
 lower_lim = 13
 upper_lim = 73
 if 'nonreper' in name_tag:
@@ -181,7 +194,7 @@ elif 'reper' in name_tag:
 	tmax_mode = False
 print(tmax_mode)
 for cv in range(0,5):
-	for subj_id in list_nonreper_test[cv]:
+	for subj_id in list_all_test[cv]:
 	# for subj_id in ['01020']:
 		# subj_id = subj_id[:5]
 		print(subj_id)
@@ -195,6 +208,10 @@ for cv in range(0,5):
 		result_path = data_dir + 'prediction_' + model_name + '_fold{0}_'.format(cv + 1) + subj_id + '.nii'
 		gt_path = data_dir + 'gt_' + model_name + '_fold{0}_'.format(cv + 1) + subj_id + '.nii'
 		flair_path = data_dir + 'flair_' + model_name + '_fold{0}_'.format(cv + 1) + subj_id + '.nii'
+
+		if not os.path.exists(gt_path):
+			print('no file for', subj_id)
+			continue
 
 		proxy = nib.load(flair_path)
 		flair_pad = proxy.get_fdata()
