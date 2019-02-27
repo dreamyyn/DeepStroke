@@ -13,8 +13,8 @@ import nibabel as nib
 contrast
 '''
 
-list_contrast_keyword = ['PWITMAX']
-output_name = 'TMAXthresholded.nii'
+list_contrast_keyword = ['ADC']
+output_name = 'ADCthresholded.nii'
 
 ext_data = 'nii'
 # to export only part of the image.
@@ -30,7 +30,7 @@ dir_dwi = '/Users/admin/deepstroke173/deepstroke173'
 # list_subfolder = sorted([os.path.join(dir_stroke,x) for x in os.listdir(dir_stroke) if
 #                   os.path.isdir(os.path.join(dir_stroke,x))])
 
-subject_cases = ['30004','30005','30011','30014','30015','30016','30019','30033','30039','30044','30051','30087']
+subject_cases = ['30089']
 list_subfolder = ['/Users/admin/deepstroke173/deepstroke173/' + x for x in subject_cases]
 print(list_subfolder)
 # loop for subjects
@@ -112,4 +112,4 @@ def formmask(list_subfolder,dir_preprocessing,dir_mask, dir_dwi, list_contrast_k
         TMAXmask = nib.Nifti1Image(img_thresholded, img_load.affine)
         nib.save(TMAXmask, os.path.join(subfolder, output_name))
 
-formmask(list_subfolder,dir_preprocessing,dir_mask, dir_dwi, list_contrast_keyword, output_name, ext_data = 'nii',mode = 'tmax',cluster = 10)
+formmask(list_subfolder,dir_preprocessing,dir_mask, dir_dwi, list_contrast_keyword, output_name, ext_data = 'nii',mode = 'adc',cluster = 10)

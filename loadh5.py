@@ -40,18 +40,18 @@ def crop(data,px_height=128,px_width=128):
     print(result.shape)
     return result
 
-dir_stroke = '/Users/admin/stroke_DL/results/'
+dir_stroke = '01002/'
 
-# path_ori = os.path.join(dir_stroke, 'inputs_aug0.hdf5')
-# data_ori = load_h5(path_ori, 'init', None)
+path_ori = os.path.join(dir_stroke, 'inputs_aug0.hdf5')
+data_ori = load_h5(path_ori, 'init', None)
 # data_ori = np.transpose(data_ori,[1,2,0,3])
-# path_aug1 = os.path.join(dir_stroke, 'inputs_aug0.hdf5')
-# # data_aug1 = load_h5(path_aug1, 'init', None)
-# path_aug2 = os.path.join(dir_stroke, 'output_aug0.hdf5')
-# data_aug2 = load_h5(path_aug2, 'init', None)
-# # data_aug2 = np.transpose(data_aug2,[1,2,0,3])
-# path_aug3 = os.path.join(dir_stroke, 'output_aug0.hdf5')
-# # data_aug3 = load_h5(path_aug3, 'init', None)
+path_aug1 = os.path.join(dir_stroke, 'inputs_aug0.hdf5')
+# data_aug1 = load_h5(path_aug1, 'init', None)
+path_aug2 = os.path.join(dir_stroke, 'output_aug0.hdf5')
+data_aug2 = load_h5(path_aug2, 'init', None)
+# data_aug2 = np.transpose(data_aug2,[1,2,0,3])
+path_aug3 = os.path.join(dir_stroke, 'output_aug0.hdf5')
+# data_aug3 = load_h5(path_aug3, 'init', None)
 # max = np.max(data_ori[:,:,:,0])
 # print(max)
 # pdb.set_trace()
@@ -66,10 +66,10 @@ dir_stroke = '/Users/admin/stroke_DL/results/'
 # data_aug3 = crop(data_aug3,data_ori.shape[2],data_ori.shape[1])
 # data_aug3 = (data_aug3 > 0.5) * 1.0
 # print(np.max(data_aug3),np.mean(data_aug3))
-# # show output
-# f, ax = plt.subplots(1, 4, subplot_kw={'xticks': [], 'yticks': []})
-# ax[0].imshow(data_ori[35,:,:,0], cmap=plt.cm.gray)
-# ax[1].imshow(data_ori[35,:,:,1], cmap=plt.cm.gray)
-# ax[2].imshow(data_ori[35,:,:,2], cmap=plt.cm.gray)
-# ax[3].imshow(data_ori[35,:,:,3], cmap=plt.cm.gray)
-# plt.show()
+# show output
+f, ax = plt.subplots(1, 4, subplot_kw={'xticks': [], 'yticks': []})
+ax[0].imshow(data_ori[35,:,:,0], cmap=plt.cm.gray)
+ax[1].imshow(data_ori[35,:,:,1], cmap=plt.cm.gray)
+ax[2].imshow(data_ori[35,:,:,2], cmap=plt.cm.gray)
+ax[3].imshow(data_aug2[35,:,:,0], cmap=plt.cm.gray)
+plt.show()

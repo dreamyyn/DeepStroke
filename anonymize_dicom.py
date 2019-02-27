@@ -12,39 +12,49 @@ def glob_filename_list(path,ext=''):
   return filename_list
 
 
-with open("ZJU_anonymize_list.csv", mode='r', encoding='utf-8-sig') as infile: # csv with the format of (id,name) per line.
-  reader = csv.reader(infile)
-  with open('ZJU_new.csv', mode='w') as outfile:
-    writer = csv.writer(outfile)
-    anonymize_list = {rows[1]: rows[0] for rows in reader} # so that the key is the patient name, and value is the anonymized id.
-print(anonymize_list)
+# with open("ZJU_anonymize_list.csv", mode='r', encoding='utf-8-sig') as infile: # csv with the format of (id,name) per line.
+#   reader = csv.reader(infile)
+#   with open('ZJU_new.csv', mode='w') as outfile:
+#     writer = csv.writer(outfile)
+#     anonymize_list = {rows[1]: rows[0] for rows in reader} # so that the key is the patient name, and value is the anonymized id.
+# print(anonymize_list)
 
-dicom_path = '/Users/admin/ZJU_strokeMRI_sorted/BL/'
+# modify path
+dicom_path = '/Users/admin/UCLAdata_RAPID/'
 pt_list = glob_filename_list(dicom_path)
 # print(pt_list)
-for subj_id in pt_list[67:]:
+for subj_id in pt_list:
   path = dicom_path + subj_id + '/'
   date_list = glob_filename_list(path)
-  if subj_id not in anonymize_list:
-    print('patient', subj_id, 'not in the anonymization list. please check.')
-    continue
+  # if subj_id not in anonymize_list:
+  #   print('patient', subj_id, 'not in the anonymization list. please check.')
+  #   continue
   dirlist = glob.glob(path + '/*/*/*.dcm')
   for dir in dirlist:
   # anonymize field
     ds = pydicom.dcmread(dir)
-    if ds.PatientName == anonymize_list[subj_id]:
+    # if ds.PatientName == anonymize_list[subj_id]:
+    #   print(subj_id,"already processed. skipping...")
+    #   continue
+    # if ds.InstitutionName == 'Anonymized':
+    #   print(subj_id,"already processed. skipping...")
+    #   continue
+    if ds.PatientName == ds.PatientID:
       print(subj_id,"already processed. skipping...")
       continue
-    ds.PatientName = anonymize_list[subj_id]
-    ds.PatientID = anonymize_list[subj_id]
-    ds.InstitutionName = 'Anonymized'
+    ds.PatientName = ds.PatientID
+    # ds.PatientID = anonymize_list[subj_id]
+    # ds.InstitutionName = 'Anonymized'
+    # ds.InstitutionAddress = ''
+    # ds.StationName = ''
+    # ds.OperatorsName = ''
     # ds.PatientsBirthDate = ds.PatientsBirthDate[:4] + "0101"
     # print(subj_id, ds.PatientName, ds.PatientID, ds.InstitutionName)
     # output_path = dcm_path
     # if not os.path.exists(output_path):
     #   os.makedirs(output_path)
     pydicom.filewriter.write_file(dir,ds) # write out anonymized file.
-  print('successfully anonymized',subj_id, 'anonymized patient name, id, and institution:',ds.PatientName, ds.PatientID, ds.InstitutionName)
+  print('successfully anonymized',subj_id, 'anonymized patient name, id, and institution:',ds.PatientName, ds.PatientID, ds.InstitutionName, ds.InstitutionAddress)
   # for date in date_list:
   #   scan_path = path + date + '/'
   #   scan_list = glob_filename_list(scan_path)
